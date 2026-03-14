@@ -1,7 +1,7 @@
 - name: OOM Monitor Rulebook
   hosts: all
   sources:
-    - ansible.eda.watch_file:
+    - ansible.eda.file_watch:
         paths:
           - /var/log/messages
 
