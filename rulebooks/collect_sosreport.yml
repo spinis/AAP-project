@@ -2,6 +2,21 @@
   hosts: all
   become: true
   tasks:
+    - name: Mount CD-ROM
+      mount:
+        name: /dev/sr0
+        src: /dev/sr0
+        mnt: /mnt
+        fstype: iso9660
+        opts: ro
+        dump: 0
+        pass: 0
+        
+    - name: Install sos package
+      yum:
+        name: sos
+        state: installed
+        
     - name: Create a directory for reports if it doesn't exist
       ansible.builtin.file:
         path: /var/tmp/ansible_reports
