@@ -3,6 +3,12 @@
   hosts: all
   become: true
   tasks:
+    # 만약 Nginx 설치가 안된 경우 설치
+    - name: Install Nginx if not present
+      ansible.builtin.yum:
+        name: nginx
+        state: present
+          
     - name: Ensure Nginx is running
       ansible.builtin.service:
         name: nginx
