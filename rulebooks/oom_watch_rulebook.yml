@@ -1,13 +1,12 @@
 - name: OOM Monitor Rulebook
   hosts: all
   sources:
-    - ansible.eda.file_watch:
-        paths:
-          - /var/log/messages
+    - ansible.eda.webhook:
+        port: 5000
 
   rules:
     - name: Detect OOM and Trigger SOSReport
-      condition: event.info is search("Out of memory", ignorecase=true)
+      condition: event.payload.message is search("Out of memory", ignorecase=true)
       action:
         run_job_template:
           name: "Collect-SOSReport" # AAP에 등록할 템플릿 이름과 똑같아야 합니다.
