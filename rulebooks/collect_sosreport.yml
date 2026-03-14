@@ -1,0 +1,31 @@
+- name: Automatic SOSReport Collection on OOM
+  hosts: all
+  become: true
+  tasks:
+    - name: Create a directory for reports if it doesn't exist
+      ansible.builtin.file:
+        path: /var/tmp/ansible_reports
+        state: directory
+        mode: '0755'
+
+    - name: Run sosreport (Batch mode)
+      # --batch: 사용자 입력 대기 없이 실행
+      # --only-plugins: 시연 시간을 단축하기 위해 핵심 플러그인만 선택 (선택 사항)
+      ansible.builtin.command: sosreport --batch --tmp-dir /var/tmp/ansible_reports
+      register: sos_output
+
+    - name: Find the generated sosreport file
+      # 실행 결과 메시지에서 파일 경로 추출
+      set_fact:
+        sos_file: "{{ sos_output.stdout | regex_search('/var/tmp/ansible_reports/sosreport-.*\\.tar\\.xz') }}"
+
+    - name: Send notification to Admin (Debug)
+      ansible.builtin.debug:
+        msg: "🚨 OOM 감지! 진단 파일 생성 완료: {{ sos_file }}"
+
+    - name: Fetch the report to Management Server (Optional)
+      # 관리 서버의 /tmp/sos_collection/ 폴더로 파일을 가져옵니다.
+      ansible.builtin.fetch:
+        src: "{{ sos_file }}"
+        dest: "/tmp/sos_collection/"
+        flat: yes
