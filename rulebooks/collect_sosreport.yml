@@ -6,16 +6,15 @@
       mount:
         name: /dev/sr0
         src: /dev/sr0
-        mnt: /mnt
+        path: /mnt
         fstype: iso9660
         opts: ro
-        dump: 0
-        pass: 0
+        state: mounted
         
     - name: Install sos package
-      yum:
+      ansible.builtin.dnf:
         name: sos
-        state: installed
+        state: present
         
     - name: Create a directory for reports if it doesn't exist
       ansible.builtin.file:
