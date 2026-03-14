@@ -1,0 +1,23 @@
+- name: Monitor System Config and Logs
+  hosts: all
+  sources:
+    - ansible.eda.watch_file:
+        paths:
+          - /etc/sysctl.conf
+          - /etc/default/grub
+          - /var/log/messages
+
+  rules:
+    # 1. 설정 파일 변경 시 감사 리포트 실행
+    - name: Config change detected
+      condition: event.path == "/etc/sysctl.conf" or event.path == "/etc/default/grub"
+      action:
+        run_job_template:
+          name: "Audit-Config-Change"
+
+    # 2. OOM 로그 발생 시 sosreport 수집 실행
+    - name: OOM detected in logs
+      condition: event.info is search("Out of memory", ignorecase=true)
+      action:
+        run_job_template:
+          name: "Collect-SOSReport"
