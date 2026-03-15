@@ -1,25 +1,33 @@
 ---
-- name: Ansible Lightspeed 기반 자동 복구
-  hosts: "{{ ansible_eda.event.target_host }}"
+- name: Red Hat Lightspeed Proactive Remediation
+  # EDA로부터 전달받은 호스트에 적용
+  hosts: "{{ target_host | default('all') }}"
+  become: yes
   vars:
-    # EDA에서 전달받은 에러 내용
-    error_msg: "{{ detected_error }}"
+    # EDA로부터 전달받은 불특정 에러 메시지
+    error_context: "{{ detected_error }}"
 
   tasks:
-    - name: 1. 에러 문맥 분석 및 Lightspeed Task 요청
-      # 실제 환경에서는 Lightspeed 전용 모듈이나 API를 호출합니다.
-      # "이 에러 로그를 해결하기 위한 Ansible Task를 생성해줘"라고 요청하는 단계
+    - name: "[Lightspeed] 시스템 상태 및 구성 분석"
       ansible.builtin.debug:
-        msg: "Lightspeed에 [ {{ error_msg }} ] 해결용 코드 요청 중..."
+        msg: "Red Hat Lightspeed가 '{{ error_context }}' 로그의 문맥을 분석 중입니다."
 
-    - name: 2. Lightspeed가 생성한 최적화된 YAML 수신
-      # Lightspeed는 Red Hat의 Best Practice가 적용된 코드를 반환합니다.
-      # 예: 에러가 'disk full'이면 디스크 정리 태스크, 'service down'이면 재시작 태스크
-      set_fact:
-        generated_task: >
-          {{ (error_msg is search('httpd')) | ternary('ansible.builtin.service: name=httpd state=restarted', 
-             (error_msg is search('disk')) | ternary('ansible.builtin.shell: rm -rf /tmp/*', 'ansible.builtin.debug: msg=Unknown_Error')) }}
+    - name: "[Lightspeed] 최적의 복구 워크플로우 식별"
+      ansible.builtin.debug:
+        msg: "하이브리드 클라우드 환경의 효율성을 위해 최적화된 복구 코드를 생성합니다."
 
-    - name: 3. 생성된 최적화 YAML 즉시 실행 (Self-Healing)
-      ansible.builtin.include_tasks:
-        content: "{{ generated_task }}"
+    # 여기서부터는 Lightspeed가 실시간으로 생성한 코드가 실행되는 단계입니다.
+    # 시연을 위해 로그의 핵심 단어를 읽어 '동적'으로 대응하는 구조입니다.
+    - name: "[Lightspeed] 실시간 복구 코드(Task) 생성 및 실행"
+      ansible.builtin.action:
+        module: "{{ 'ansible.builtin.service' if 'service' in error_context or 'httpd' in error_context else 'ansible.builtin.shell' }}"
+      args:
+        # 로그 내용에 따라 적절한 인자를 Lightspeed가 판단하여 주입하는 것을 모사
+        name: "{{ 'httpd' if 'httpd' in error_context else omit }}"
+        state: "{{ 'restarted' if 'httpd' in error_context else omit }}"
+        cmd: "{{ 'sync; echo 3 > /proc/sys/vm/drop_caches' if 'memory' in error_context else omit }}"
+      register: lightspeed_result
+
+    - name: "[Lightspeed] 조치 결과 모니터링 및 보고"
+      ansible.builtin.debug:
+        msg: "Lightspeed가 시스템의 복원력(Resilience)을 확보했습니다. 조치 완료: {{ lightspeed_result.changed }}"
