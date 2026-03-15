@@ -1,45 +1,46 @@
 ---
-- name: OOM 장애 분석 및 AI 리포트 생성
+- name: RHEL AI 지능형 장애 분석 및 SOS리포트 자동화
   hosts: all
-  become: yes
   vars:
-    # Ollama가 설치된 VM의 IP (localhost라면 127.0.0.1)
-    ai_server_ip: "172.30.1.228" 
+    ai_server_ip: "172.30.1.228"
+    report_path: "/var/tmp"
 
   tasks:
-    - name: 1. 시스템 로그에서 OOM 관련 핵심 추출
-      ansible.builtin.shell: "grep -i 'out of memory' /var/log/messages | tail -n 1"
+    - name: 1. 시스템 로그에서 OOM 메시지 검색
+      ansible.builtin.shell: "dmesg | grep -i 'out of memory' | tail -n 1"
       register: oom_result
       ignore_errors: yes
 
-    - name: 2. Granite AI model 에게 분석 요청
+    - name: 2. Granite AI에게 분석 요청 (OOM 감지 시에만)
       ansible.builtin.uri:
-        url: "http://{{ ai_server_ip | string }}:11434/api/generate"
+        url: "http://{{ ai_server_ip }}:11434/api/generate"
         method: POST
         body_format: json
         body:
           model: "granite3-dense:2b"
-          prompt: |
-            Analyze this log and explain in Korean: {{ oom_result.stdout | default('N/A') }}
+          prompt: "Analyze this OOM log and explain in Korean briefly: {{ oom_result.stdout }}"
           stream: false
-        timeout: 300
+        timeout: 120
       register: ai_response
-      # 핵심 수정: 변수가 '정의되어 있고' + '비어있지 않을 때'만 실행
       when: 
-        - oom_result is defined
         - oom_result.stdout is defined
         - oom_result.stdout != ""
+        - "'Out of memory' in oom_result.stdout"
 
-    - name: 3. 로그가 없을 경우 메시지 출력
+    - name: 3. sosreport 생성 (배치 모드)
+      # --batch 옵션으로 자동 승인, --tmp-dir로 저장 위치 지정
+      ansible.builtin.shell: "sos report --batch --tmp-dir {{ report_path }} --name OOM_Analysis"
+      register: sos_result
+      when: ai_response.skipped is not defined or not ai_response.skipped
+      become: yes
+
+    - name: 4. ✨ 최종 리포트 출력 ✨
       ansible.builtin.debug:
-        msg: "AI 분석 결과: {{ ai_response.json.response }}"
-      when: ai_response is defined and ai_response.json is defined
-
-    - name: 4. AI 분석 결과 요약 출력
-      set_stats:
-        data:
-          ai_insight: "{{ ai_response.json.response }}"
-
-    - name: 5. 최종 리포트 출력 (로그 확인용)
-      debug:
-        msg: "{{ ai_response.json.response }}"
+        msg: 
+          - "---------------------------------------------------------------"
+          - "⚠️  OOM이 발견되었습니다! 분석 내용과 sos리포트를 확인하세요."
+          - "🤖 AI 분석 요약 : {{ ai_response.json.response | default('분석 실패') }}"
+          - "📂 sos리포트 저장 위치 : {{ report_path }}"
+          - "📄 생성 파일명 : {{ sos_result.stdout_lines[-1] | default('확인 필요') }}"
+          - "---------------------------------------------------------------"
+      when: ai_response.skipped is not defined or not ai_response.skipped
