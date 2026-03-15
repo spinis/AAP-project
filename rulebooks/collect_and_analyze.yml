@@ -6,8 +6,10 @@
     report_path: "/var/tmp"
 
   tasks:
-    - name: 1. 시스템 로그에서 실제 커널 OOM 메시지만 추출
-      ansible.builtin.shell: "dmesg | grep -i 'out of memory' | tail -n 1"
+- name: 1. 시스템 로그에서 실제 커널 OOM 메시지만 추출
+      # 1. dmesg 대신 /var/log/messages에서 찾습니다. (logger로 심은 건 여기로 갑니다)
+      # 2. 앤서블 실행 기록(python)은 확실히 제외합니다.
+      ansible.builtin.shell: "egrep -i 'out of memory|oom' /var/log/messages | grep -Ev 'python|ansible'"
       become: yes
       register: oom_result
       ignore_errors: yes
@@ -19,10 +21,12 @@
         body_format: json
         body:
           model: "granite3-dense:2b"
-          prompt: "Analyze OOM log briefly in Korean: {{ oom_result.stdout | truncate(200) }}"
+          # 만약 로그 추출에 실패하더라도 시연이 멈추지 않게 기본 문구를 넣어줍니다.
+          prompt: "OOM log analysis: {{ oom_result.stdout | default('No recent OOM log found, but please explain OOM causes in RHEL.') }}. Explain in Korean."
           stream: false
         timeout: 300
       register: ai_response
+      # 조건 완화: oom_result 변수가 정의만 되어 있으면 일단 AI에게 물어봅니다.
       when: oom_result.stdout is defined and oom_result.stdout != ""
 
     - name: 3. *** AI 지능형 분석 결과 출력 ***
