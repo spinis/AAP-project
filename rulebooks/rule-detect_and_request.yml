@@ -7,7 +7,7 @@
   rules:
     - name: "시스템 장애 감지 시 Lightspeed 자동 조치 트리거"
       # error, fail, panic 등 불특정 에러 키워드 감지
-      condition: event.line search("error|fail|panic|down|crit|drop|oom", ignorecase=true)
+      condition: event.line is search("error|fail|panic|down|crit|drop|oom", ignorecase=true)
       action:
         run_job_template:
           name: "Lightspeed_Remediation_Job"  # AAP에 등록된 템플릿 이름
