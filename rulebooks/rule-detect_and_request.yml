@@ -1,0 +1,19 @@
+---
+- name: Red Hat Lightspeed 지능형 장애 복구 루틴
+  hosts: all
+  sources:
+    - ansible.eda.tail:
+        path: /var/log/messages
+  rules:
+    - name: "시스템 장애 감지 시 Lightspeed 자동 조치 트리거"
+      # error, fail, panic 등 불특정 에러 키워드 감지
+      condition: event.line search("error|fail|panic|down|crit|drop", ignorecase=true)
+      action:
+        run_job_template:
+          name: "Lightspeed_Remediation_Job"  # AAP에 등록된 템플릿 이름
+          organization: "Default"
+          job_args:
+            extra_vars:
+              # 감지된 날것의 로그 전체를 Lightspeed로 전달
+              detected_error: "{{ event.line }}"
+              target_host: "{{ inventory_hostname }}"
