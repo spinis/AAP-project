@@ -21,7 +21,7 @@
           model: "granite3-dense:2b"
           prompt: "Analyze this OOM log and explain in Korean briefly: {{ oom_result.stdout }}"
           stream: false
-        timeout: 120
+        timeout: 300
       register: ai_response
       when: 
         - oom_result.stdout is defined
