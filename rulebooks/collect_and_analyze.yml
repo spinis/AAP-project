@@ -12,7 +12,7 @@
       ansible.builtin.shell: "egrep -i 'out of memory|oom' /var/log/messages | grep -Ev 'python|ansible'"
       become: yes
       register: oom_result
-      ignore_errors: yes
+      failed_when: false
 
     - name: 2. Granite AI에게 분석 요청
       ansible.builtin.uri:
