@@ -1,0 +1,37 @@
+---
+- name: OOM 장애 분석 및 AI 리포트 생성
+  hosts: all
+  become: yes
+  vars:
+    # Ollama가 설치된 VM의 IP (localhost라면 127.0.0.1)
+    ai_server_ip: "172.30.1.228" 
+
+  tasks:
+    - name: 1. 시스템 로그에서 OOM 관련 핵심 추출
+      shell: "dmesg | grep -i 'out of memory' | tail -n 3"
+      register: oom_log
+
+    - name: 2. RHEL AI (Granite)에게 분석 요청
+      uri:
+        url: "http://{{ 172.30.1.228 }}:11434/api/generate"
+        method: POST
+        body_format: json
+        body:
+          model: "granite3-dense:2b"
+          prompt: |
+            Task: You are a RHEL expert. Analyze this log and explain the Root Cause and Solution in Korean.
+            Log: "{{ oom_log.stdout }}"
+            Format:
+            [장애 원인]:
+            [조치 방안]:
+          stream: false
+      register: ai_response
+
+    - name: 3. AI 분석 결과 요약 출력
+      set_stats:
+        data:
+          ai_insight: "{{ ai_response.json.response }}"
+
+    - name: 4. 최종 리포트 출력 (로그 확인용)
+      debug:
+        msg: "{{ ai_response.json.response }}"
