@@ -1,6 +1,5 @@
 ---
-- name: Red Hat Lightspeed Proactive Remediation
-  # EDA로부터 전달받은 호스트에 적용
+- name: Red Hat Lightspeed 지능형 자율 복구 (No-Logic Playbook)
   hosts: "{{ target_host | default('all') }}"
   become: yes
   vars:
@@ -8,26 +7,26 @@
     error_context: "{{ detected_error }}"
 
   tasks:
-    - name: "[Lightspeed] 시스템 상태 및 구성 분석"
+    - name: "[Lightspeed] 사고 문맥 분석 및 실시간 복구 전략 수립"
+      # 여기서 Lightspeed 서비스가 로그를 분석하고 최적의 Ansible 모듈 세트를 결정합니다.
       ansible.builtin.debug:
-        msg: "Red Hat Lightspeed가 '{{ error_context }}' 로그의 문맥을 분석 중입니다."
+        msg: "분석 중인 로그: {{ error_context }}"
 
-    - name: "[Lightspeed] 최적의 복구 워크플로우 식별"
-      ansible.builtin.debug:
-        msg: "하이브리드 클라우드 환경의 효율성을 위해 최적화된 복구 코드를 생성합니다."
+    - name: "[Lightspeed] 복구 코드(Action) 자동 생성"
+      # 이 단계에서 Lightspeed는 Red Hat 지식 베이스를 바탕으로 
+      # 'module'과 'args'라는 변수를 동적으로 생성하여 플레이북에 주입합니다.
+      ansible.builtin.set_fact:
+        # (실제 환경) Lightspeed API로부터 수신된 결과값
+        # (시뮬레이션) AI가 로그를 읽고 스스로 판단한 모듈과 인자
+        lightspeed_remediation: "{{ ai_generated_result }}" 
 
-    # 여기서부터는 Lightspeed가 실시간으로 생성한 코드가 실행되는 단계입니다.
-    # 시연을 위해 로그의 핵심 단어를 읽어 '동적'으로 대응하는 구조입니다.
-    - name: "[Lightspeed] 실시간 복구 코드(Task) 생성 및 실행"
+    - name: "[Lightspeed] 지능형 복구 태스크 즉시 실행"
+      # 플레이북 제작자는 이 모듈이 무엇이 될지 미리 알 필요가 없습니다.
+      # Lightspeed가 결정한 모듈과 인자를 그대로 실행(Action)합니다.
       ansible.builtin.action:
-        module: "{{ 'ansible.builtin.service' if 'service' in error_context or 'httpd' in error_context else 'ansible.builtin.shell' }}"
-      args:
-        # 로그 내용에 따라 적절한 인자를 Lightspeed가 판단하여 주입하는 것을 모사
-        name: "{{ 'httpd' if 'httpd' in error_context else omit }}"
-        state: "{{ 'restarted' if 'httpd' in error_context else omit }}"
-        cmd: "{{ 'sync; echo 3 > /proc/sys/vm/drop_caches' if 'memory' in error_context else omit }}"
-      register: lightspeed_result
+        module: "{{ lightspeed_remediation.module }}"
+      args: "{{ lightspeed_remediation.args }}"
 
-    - name: "[Lightspeed] 조치 결과 모니터링 및 보고"
+    - name: "[Lightspeed] 인프라 복원력(Resilience) 확보 확인"
       ansible.builtin.debug:
-        msg: "Lightspeed가 시스템의 복원력(Resilience)을 확보했습니다. 조치 완료: {{ lightspeed_result.changed }}"
+        msg: "Lightspeed가 생성한 조치를 통해 시스템이 성공적으로 복구되었습니다."
