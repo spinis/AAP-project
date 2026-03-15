@@ -21,9 +21,8 @@
         lightspeed_remediation: "{{ ai_generated_result }}" 
 
     - name: "[Lightspeed] 지능형 복구 태스크 즉시 실행"
-      # 플레이북 제작자는 이 모듈이 무엇이 될지 미리 알 필요가 없습니다.
-      # Lightspeed가 결정한 모듈과 인자를 그대로 실행(Action)합니다.
-      ansible.builtin.action:
+      # 'ansible.builtin.action'이 아니라 그냥 'action'입니다.
+      action:
         module: "{{ lightspeed_remediation.module }}"
       args: "{{ lightspeed_remediation.args }}"
 
