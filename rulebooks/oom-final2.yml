@@ -10,3 +10,4 @@
       action:
         run_job_template:
           name: "Collect-SOSReport" # AAP에 등록할 템플릿 이름과 똑같아야 합니다.
+          organization: "Default"
