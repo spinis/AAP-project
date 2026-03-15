@@ -1,9 +1,0 @@
----
-- name: Restore Nginx Service
-  hosts: all
-  become: true
-  tasks:
-    - name: Ensure Nginx is running
-      ansible.builtin.service:
-        name: nginx
-        state: started
