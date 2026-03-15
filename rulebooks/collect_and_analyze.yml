@@ -8,7 +8,7 @@
   tasks:
     - name: 1. 시스템 로그에서 OOM 메시지 검색
       # 'tail -n 100'으로 최근 로그 100줄 중 마지막 OOM을 찾고, '-i'로 대소문자 무시
-      ansible.builtin.shell: "grep -i 'out of memory' /var/log/messages"
+      ansible.builtin.shell: "egrep -i 'out of memory|oom-killer' /var/log/messages | tail -n 2""
       register: oom_result
       ignore_errors: yes
 
