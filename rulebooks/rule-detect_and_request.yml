@@ -2,12 +2,11 @@
 - name: Red Hat Lightspeed 지능형 장애 복구 루틴
   hosts: all
   sources:
-    # tail 대신 표준 webhook 소스 사용 (Default DE 지원)
     - ansible.eda.webhook:
-        port: 5000
+        port: 5002  # 사용 중인 포트를 피해 5002로 설정
   rules:
     - name: "시스템 장애 감지 시 Lightspeed 자동 조치 트리거"
-      # webhook은 데이터를 payload 안에 담아 보냅니다.
+      # 웹훅으로 들어오는 데이터는 event.payload 구조를 가집니다.
       condition: event.payload.message is search("error|fail|panic|down|crit|drop|oom", ignorecase=true)
       action:
         run_job_template:
