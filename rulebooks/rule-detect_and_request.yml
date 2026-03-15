@@ -2,17 +2,18 @@
 - name: Red Hat Lightspeed 지능형 장애 복구 루틴
   hosts: all
   sources:
-    - ansible.eda.tail:
-        path: /var/log/messages
+    # tail 대신 표준 webhook 소스 사용 (Default DE 지원)
+    - ansible.eda.webhook:
+        port: 5000
   rules:
     - name: "시스템 장애 감지 시 Lightspeed 자동 조치 트리거"
-      condition: event.line is search("error|fail|panic|down|crit|drop|oom", ignorecase=true)
+      # webhook은 데이터를 payload 안에 담아 보냅니다.
+      condition: event.payload.message is search("error|fail|panic|down|crit|drop|oom", ignorecase=true)
       action:
         run_job_template:
-          name: "Lightspeed_Remediation_Job"  # AAP에 등록된 템플릿 이름
+          name: "Lightspeed_Remediation_Job"
           organization: "Default"
           job_args:
             extra_vars:
-              # 감지된 날것의 로그 전체를 Lightspeed로 전달
-              detected_error: "{{ event.line }}"
-              target_host: "{{ inventory_hostname }}"
+              detected_error: "{{ event.payload.message }}"
+              target_host: "rh93-hb01"
