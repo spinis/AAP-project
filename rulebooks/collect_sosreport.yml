@@ -1,0 +1,34 @@
+- name: Automatic SOSReport Collection
+  hosts: all
+  become: true
+  tasks:
+    - name: Mount CD-ROM
+      ansible.builtin.mount:
+        path: /mnt
+        src: /dev/sr0
+        fstype: iso9660
+        opts: ro
+        state: mounted
+
+    - name: Install sos package
+      ansible.builtin.dnf:
+        name: sos
+        state: present
+
+    - name: Create report directory
+      ansible.builtin.file:
+        path: /var/tmp/ansible_reports
+        state: directory
+        mode: '0755'
+
+    - name: Run sosreport
+      ansible.builtin.command: sosreport --batch --tmp-dir /var/tmp/ansible_reports
+      register: sos_output
+
+    - name: Find report file path
+      set_fact:
+        sos_file: "{{ sos_output.stdout | regex_search('/var/tmp/ansible_reports/sosreport-.*\\.tar\\.xz') }}"
+
+    - name: Final Result
+      ansible.builtin.debug:
+        msg: "진단 파일 생성 완료: {{ sos_file }}"

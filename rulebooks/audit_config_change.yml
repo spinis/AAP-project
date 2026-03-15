@@ -1,0 +1,11 @@
+- name: Audit Configuration Change
+  hosts: all
+  become: true
+  tasks:
+    - name: Show which file changed
+      ansible.builtin.debug:
+        msg: "변경 감지된 파일: {{ ansible_eda.event.path }}"
+
+    - name: Print the change event details
+      ansible.builtin.debug:
+        msg: "이벤트 상세 정보: {{ ansible_eda.event.info }}"
