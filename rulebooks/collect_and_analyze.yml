@@ -13,7 +13,7 @@
 
     - name: 2. Granite AI model 에게 분석 요청
       uri:
-        url: "http://{{ 172.30.1.228 }}:11434/api/generate"
+        url: "http://{{ ai_server_ip | string }}:11434/api/generate"
         method: POST
         body_format: json
         body:
