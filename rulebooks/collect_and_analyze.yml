@@ -28,12 +28,18 @@
             [조치 방안]:
           stream: false
       register: ai_response
+      when: oom_result.stdout != ""
 
-    - name: 3. AI 분석 결과 요약 출력
+    - name: 3. 로그가 없을 경우 메시지 출력
+      debug:
+        msg: "이 서버에서는 OOM 로그가 발견되지 않아 AI 분석을 건너뜁니다."
+      when: oom_result.stdout == ""
+
+    - name: 4. AI 분석 결과 요약 출력
       set_stats:
         data:
           ai_insight: "{{ ai_response.json.response }}"
 
-    - name: 4. 최종 리포트 출력 (로그 확인용)
+    - name: 5. 최종 리포트 출력 (로그 확인용)
       debug:
         msg: "{{ ai_response.json.response }}"
