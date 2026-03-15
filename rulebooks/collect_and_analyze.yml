@@ -6,7 +6,7 @@
     report_path: "/var/tmp"
 
   tasks:
-- name: 1. 시스템 로그에서 실제 커널 OOM 메시지만 추출
+    - name: 1. 시스템 로그에서 실제 커널 OOM 메시지만 추출
       # 1. dmesg 대신 /var/log/messages에서 찾습니다. (logger로 심은 건 여기로 갑니다)
       # 2. 앤서블 실행 기록(python)은 확실히 제외합니다.
       ansible.builtin.shell: "egrep -i 'out of memory|oom' /var/log/messages | grep -Ev 'python|ansible'"
