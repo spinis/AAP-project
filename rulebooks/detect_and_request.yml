@@ -1,0 +1,13 @@
+- name: 불특정 시스템 장애 감지 루틴
+  hosts: all
+  sources:
+    - ansible.eda.tail:
+        path: /var/log/messages
+  rules:
+    - name: "에러 로그 발견 시 Lightspeed 호출"
+      condition: event.line search("error|fail|panic", ignorecase=true)
+      action:
+        run_playbook:
+          name: "generate_remediation_by_lightspeed.yml"
+          extra_vars:
+            detected_error: "{{ event.line }}"
