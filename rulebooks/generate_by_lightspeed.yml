@@ -1,0 +1,25 @@
+---
+- name: Ansible Lightspeed 기반 자동 복구
+  hosts: "{{ ansible_eda.event.target_host }}"
+  vars:
+    # EDA에서 전달받은 에러 내용
+    error_msg: "{{ detected_error }}"
+
+  tasks:
+    - name: 1. 에러 문맥 분석 및 Lightspeed Task 요청
+      # 실제 환경에서는 Lightspeed 전용 모듈이나 API를 호출합니다.
+      # "이 에러 로그를 해결하기 위한 Ansible Task를 생성해줘"라고 요청하는 단계
+      ansible.builtin.debug:
+        msg: "Lightspeed에 [ {{ error_msg }} ] 해결용 코드 요청 중..."
+
+    - name: 2. Lightspeed가 생성한 최적화된 YAML 수신
+      # Lightspeed는 Red Hat의 Best Practice가 적용된 코드를 반환합니다.
+      # 예: 에러가 'disk full'이면 디스크 정리 태스크, 'service down'이면 재시작 태스크
+      set_fact:
+        generated_task: >
+          {{ (error_msg is search('httpd')) | ternary('ansible.builtin.service: name=httpd state=restarted', 
+             (error_msg is search('disk')) | ternary('ansible.builtin.shell: rm -rf /tmp/*', 'ansible.builtin.debug: msg=Unknown_Error')) }}
+
+    - name: 3. 생성된 최적화 YAML 즉시 실행 (Self-Healing)
+      ansible.builtin.include_tasks:
+        content: "{{ generated_task }}"
