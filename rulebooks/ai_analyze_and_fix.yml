@@ -1,0 +1,17 @@
+- name: Granite AI에게 자율 분석 및 조치 코드 요청
+      ansible.builtin.uri:
+        url: "http://{{ ai_server_ip }}:11434/api/generate"
+        method: POST
+        body_format: json
+        body:
+          model: "granite3-dense:2b"
+          prompt: |
+            [Role] Senior Linux Admin & Ansible expert
+            [Log] {{ raw_log }}
+            [Task] 
+            1. 위 로그의 장애 원인을 한국어로 분석하세요.
+            2. 이 문제를 해결하기 위한 '가장 안전한' Ansible task 코드를 작성하세요.
+            3. YAML 코드만 출력하고 설명은 생략하세요.
+          stream: false
+        timeout: 120
+      register: ai_output
