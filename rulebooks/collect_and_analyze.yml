@@ -22,7 +22,11 @@
         body:
           model: "granite3-dense:2b"
           # 만약 로그 추출에 실패하더라도 시연이 멈추지 않게 기본 문구를 넣어줍니다.
-          prompt: "OOM log analysis: {{ oom_result.stdout | default('No recent OOM log found, but please explain OOM causes in RHEL.') }}. Explain in Korean."
+          prompt: |
+            [Role] 리눅스 커널 전문가
+            [Task] 아래 OOM 로그를 분석하여 한국어로 설명하세요.
+            [Format] 1. 원인: (세 줄 요약), 2. 대상: (종료된 프로세스명), 3. 조치방안: (간단히)
+            [Log] {{ oom_result.stdout }}
           stream: false
         timeout: 300
       register: ai_response
