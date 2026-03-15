@@ -11,7 +11,7 @@
       shell: "dmesg | grep -i 'out of memory' | tail -n 3"
       register: oom_log
 
-    - name: 2. RHEL AI (Granite)에게 분석 요청
+    - name: 2. Granite AI model 에게 분석 요청
       uri:
         url: "http://{{ 172.30.1.228 }}:11434/api/generate"
         method: POST
@@ -19,8 +19,10 @@
         body:
           model: "granite3-dense:2b"
           prompt: |
-            Task: You are a RHEL expert. Analyze this log and explain the Root Cause and Solution in Korean.
-            Log: "{{ oom_log.stdout }}"
+            [Context]: You are a RHEL Troubleshooter.
+            [Log]: "{{ oom_log_detail.stdout }}"
+            [Task]: Analyze the log above. 1. Identify which process died. 2. Suggest a fix.
+            [Language]: Answer in Korean.
             Format:
             [장애 원인]:
             [조치 방안]:
